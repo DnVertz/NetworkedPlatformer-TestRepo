@@ -33,13 +33,10 @@ for x in coll:
 
 state.state = "start"
 pygame.init()
-
 titlefont = pygame.font.Font(r'arial.ttf', 40)
-
 while True:
 	if quitol == True:
 		break
-
 	events = pygame.event.get()
 	for event in events:
 		if event.type == pygame.QUIT:
@@ -66,10 +63,6 @@ while True:
 
 	pygame.display.flip()
 
-#sock.settimeout(1.0)
-
-
-
 initdata,addr = sock.recvfrom(4096)
 print(initdata)
 initdata = initdata.decode('UTF-8')
@@ -90,26 +83,15 @@ def networkthread(clientid):
 	global predict
 	while True:
 		try:
-			data,bruh = sock.recvfrom(4096)
-			
+			data,addr2 = sock.recvfrom(4096)
 		except:
 			break
 
 		data = data.decode('UTF-8')
-		
-
-		
-
-
-
-
-		
 		split = data.split("\n")
 
 		for p in split:
 			split2 = p.split(";")
-
-				
 
 			if split2[0] == "spawn":
 
@@ -121,22 +103,10 @@ def networkthread(clientid):
 				if split2[1] is not clientid:
 					multiplays.append(actor.actor(int(split2[2]), int(split2[3]),25 ,50 ,0,hitbox,split2[1]))
 
-			if split2[0] == "velo":
-				if len(split2) == 4:
-					for x in multiplays:
-						if x.index == split2[1]:
-							if x.predict == False:
-								if str(split2[1]) != str(clientid):
-									x.setVx(int(split2[2]))
-									x.setVy(int(split2[3]))
-
 			if split2[0] == "pos":
 					for x in multiplays:
 						if x.index == split2[1]:
 							x.setPos(int(split2[2]),int(split2[3]))
-
-
-								
 
 			if split2[0] == "leave":
 				for x in multiplays:
@@ -148,57 +118,38 @@ thr = Thread(target = networkthread,args =(str(clientid),))
 thr.start()
 
 while True:
-	data2 = "pos;"+str(clientid)+";"+str(int(player1.x))+";"+str(int(player1.y))+"\n"
-	data2 = data2.encode('UTF-8')
-	sock.sendto(data2,server_address)
 
+	
 
 	screen.fill((128,128,128))
+
 	if quitol == True:
+		data2 = "leave;"+str(clientid)+"\n"
+		data2 = data2.encode('UTF-8')
+		sock.sendto(data2,server_address)
 		break
-
 	events = pygame.event.get()
-
 	for event in events:
 		if event.type == pygame.QUIT:
 			quitol = True
-
 	for x in coll:
 		if coll.index(x) >= 4:
 			pygame.draw.rect(screen,(60,60,60),(x[0][0],x[0][1],x[1][0],x[1][1]))
 
-	
+	if player1 is not None:
+		player1.physicsHandler(fps)
+		data2 = "pos;"+str(clientid)+";"+str(int(player1.x))+";"+str(int(player1.y))+"\n"
+		data2 = data2.encode('UTF-8')
+		sock.sendto(data2,server_address)
+		x = inputs.run(state,player1)
+		player1.render(screen)
 
-	
-	player1.physicsHandler(fps)
-
-	x = inputs.run(state,player1)
-	player1.render(screen)
-	for p in multiplays:
-
-		if p.index != clientid:
-			if p.predict == True:
-				print("predict on")
-				p.physicsHandler(fps)
-			else:
-				print("predict off")
-			p.render(screen)
+		for p in multiplays:
+			if p.index != clientid:
+				p.render(screen)
+		pygame.display.flip()
 
 
 
-	"""data2 = "velo;"+str(int(player1.vx))+";"+str(int(player1.vy))+"\n"
-	data2 = data2.encode('UTF-8')
-	sock.send(data2)"""
-
-	
-
-	
-
-	
-
-	
-
-
-	pygame.display.flip()
 
 sock.close()
