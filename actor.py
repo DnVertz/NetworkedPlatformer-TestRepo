@@ -2,10 +2,11 @@ import pygame
 import numpy
 import random
 class actor:
-	def __init__(self, x=0, y=0, w=0, h=0, Θ=0,hitboxes=0,index= 0,predict = False):
+	def __init__(self, x=0, y=0, w=0, h=0, Θ=0,hitboxes=0,index= 0,name = None,predict = False):
 		self.hitboxes = hitboxes
 		self.isjump = False
 		self.predict = predict
+		self.name = name
 		self.x = x
 		self.y = y
 		self.vx = 0
@@ -69,11 +70,18 @@ class actor:
 			return False
 
 	def render(self, screen):
+		buttonfont = pygame.font.Font(r"arial.ttf", 25)
 
 		rects = pygame.Rect((self.x, self.y), (self.w, self.h))
 		rotated = pygame.transform.rotate(self.image,0)
 		rotatedrect = rotated.get_rect(center=rects.center)
+		textSurf = buttonfont.render(self.name, 1, (255,255,255))
+		textRect = textSurf.get_rect()
+		textRect.center = ((self.x+10, self.y-20))
+		screen.blit(textSurf, textRect)
+		
 		screen.blit(self.image, rects)
+		
 
 	def setPos(self, x, y):
 
