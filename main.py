@@ -67,6 +67,7 @@ while True:
 			sock.sendto(byte,server_address)
 			initdata2,addr = sock.recvfrom(4096)
 			initdata2 = initdata2.decode('UTF-8')
+			print(initdata2)
 
 			if initdata2 == "True":
 				break
@@ -80,6 +81,7 @@ while True:
 
 	pygame.display.flip()
 
+print("hello?")
 initdata,addr = sock.recvfrom(4096)
 
 initdata = initdata.decode('UTF-8')

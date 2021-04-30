@@ -12,7 +12,7 @@ s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
 s.connect(("8.8.8.8", 8008))
 HOSTname = str(s.getsockname()[0])
 s.close()
-PORT = 8007
+PORT = 8008
 HOST = ''
 players = []
 #players_lock = threading.Lock()
@@ -37,7 +37,7 @@ def removePlayer(playerID):
 
 def sendPlayerInit(player, addr,socket):
 	data = "init;"+str(player.id)+";"+str(player.x)+";"+str(player.y)+";"+str(player.name)+"\n"
-	socket.sendto(data.encode('UTF-8'),player.addr)
+	socket.sendto(data.encode('UTF-8'),addr)
 
 
 def sendPlayerSpawn(player,addr):
@@ -156,7 +156,6 @@ class MyUDPHandler(socketserver.DatagramRequestHandler):
 				msg = "True"
 				msg = msg.encode()
 				socket.sendto(msg,self.client_address)
-
 				player = Player(socket,self.client_address,split[1])
 				playerID = player.id
 				players.append(player)
