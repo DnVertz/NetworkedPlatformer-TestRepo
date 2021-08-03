@@ -14,6 +14,8 @@ import sys
 
 HOST = None
 PORT = None
+lockout = False
+kicked = False
 state = ui.uistate()
 width = 1024
 height = 640
@@ -30,7 +32,10 @@ screen = pygame.display.set_mode((width, height),pygame.SCALED,vsync = 1 )
 #corner(x,y),(width,height)
 #,[(500,10),(1,500)]
 
-coll = [(0,0),(0,640)],[(1024,0),(1024,640)],[(0,640),(1024,640)],[(0,0),(1024,0)],[(0,500),(300,500)],[(500,450),(60,125)],[(800,400),(500,400)]#stores the level hitboxes... can and will be changed into a text file
+coll = [(0,0),(0,640)],[(1024,0),(1024,640)],[(0,640),(1024,640)],[(0,0),(1024,0)],[(0,500),(300,500)],[(500,450),(60,125)],[(800,400),(500,400)]
+coll0 = [(0,0),(0,640)],[(1024,0),(1024,640)],[(0,640),(1024,640)],[(0,0),(1024,0)],[(0,500),(300,500)],[(500,450),(60,125)],[(800,400),(500,400)]
+coll1 = [(0,0),(0,640)],[(1024,0),(1024,640)],[(0,640),(1024,640)],[(0,0),(1024,0)],[(0,500),(200,500)],[(500,450),(60,125)],[(800,400),(500,400)]
+#stores the level hitboxes... can and will be changed into a text file
 hitbox = []#loads the hitboxes
 multiplays = []#stores the actor class
 messages = []
@@ -65,6 +70,7 @@ while True:
 			msgs = str("join;"+name+"\n")
 			byte = msgs.encode()
 			sock.sendto(byte,server_address)
+			sock.settimeout(0.5)
 			initdata2,addr = sock.recvfrom(4096)
 			initdata2 = initdata2.decode('UTF-8')
 			print(initdata2)
@@ -72,7 +78,7 @@ while True:
 			if initdata2 == "True":
 				break
 			else:
-				title = "Name in use"
+				title = "Name in use!!!!"
 				state.state = "start"
 
 		except:
@@ -82,6 +88,7 @@ while True:
 	pygame.display.flip()
 
 print("hello?")
+sock.settimeout(None)
 initdata,addr = sock.recvfrom(4096)
 
 initdata = initdata.decode('UTF-8')
@@ -103,6 +110,8 @@ def networkthread(clientid):
 	global predict
 	global messages
 	global msgtimeout
+	global kicked
+	#print("yes")
 	while True:
 		try:
 			data,addr2 = sock.recvfrom(4096)
@@ -118,7 +127,6 @@ def networkthread(clientid):
 			if split2[0] == "spawn":
 
 				if split2[1] is not clientid:
-					
 					multiplays.append(actor.actor(int(split2[2]), int(split2[3]),25 ,50 ,0,hitbox,split2[1],split2[4]))
 
 			if split2[0] == "join":
@@ -129,8 +137,11 @@ def networkthread(clientid):
 					for x in multiplays:
 						if x.index == split2[1]:
 							x.setPos(int(split2[2]),int(split2[3]))
+							print(split2[4])
+							x.setRoom(split2[4])
 
 			if split2[0] == "leave":
+				print("x")
 				if split2[1] == clientid:
 					os._exit(1)
 				for x in multiplays:
@@ -155,11 +166,46 @@ def signal_handler(sig, frame):
 	sock.sendto(data2,server_address)
 	os._exit(1)
 
+def roomcheck(player1):
+	global lockout
+	if player1.x > 997:
+		if player1.room < 1:
+			player1.room += 1
+			player1.x = 4
+			player1.y = 0
+			lockout = True
+			print(lockout)
+			player1.vx = 0
+			
+	elif player1.x < 2:
+		if player1.room > 0:
+			player1.room -= 1
+			player1.x = 993
+			player1.y = 0
+			lockout = True
+			print(lockout)
+			player1.vx = 0
+			
+			
+
+
+
+
+
+
+
 while True:
 
 	signal.signal(signal.SIGINT, signal_handler)
+	roomcheck(player1)
 
 	screen.fill((128,128,128))
+
+	coll = eval("coll" + str(player1.room))
+	hitbox = []
+	for x in coll:
+		hitbox.append(hitboxes.hitboxes(x[0][0],x[0][1],x[1][0],x[1][1]))
+	player1.hitboxes = hitbox
 
 	if quitol == True:
 		data2 = "leave;"+str(clientid)+"\n"
@@ -174,16 +220,19 @@ while True:
 		if coll.index(x) >= 4:
 			pygame.draw.rect(screen,(60,60,60),(x[0][0],x[0][1],x[1][0],x[1][1]))
 
+
+
+	
 	if player1 is not None:
 
 		player1.physicsHandler(fps)
-		data2 = "pos;"+str(clientid)+";"+str(int(player1.x))+";"+str(int(player1.y))+"\n"
+		data2 = "pos;"+str(clientid)+";"+str(int(player1.x))+";"+str(int(player1.y))+";"+str(int(player1.room))+"\n"
 		data2 = data2.encode('UTF-8')
 		sock.sendto(data2,server_address)
 		if len(messages) > 0:
 			msgtimeout += 1
 
-		if len(messages) == 5 or (msgtimeout > 300 and len(messages)>0):
+		if len(messages) == 7 or (msgtimeout > 350 and len(messages)>0):
 			msgtimeout = 0
 			messages.remove(messages[0])
 
@@ -194,7 +243,10 @@ while True:
 
 		for p in multiplays:
 			if p.index != clientid:
-				p.render(screen)
+				print(p.room)
+				print(player1.room)
+				if int(p.room) == int(player1.room):
+					p.render(screen)
 
 		for i in range(len(messages)):
 			amount = messagefont.size(messages[i])
@@ -213,8 +265,13 @@ while True:
 				data2 = "msg;"+str(connec)+";"+str(name)+"\n"
 				data2 = data2.encode('UTF-8')
 				sock.sendto(data2,server_address)
+		#if kicked == True:
+		if lockout == False:
+			x = inputs.run(state,player1,events,msgbox)
 
-		x = inputs.run(state,player1,events,msgbox)
+		if lockout == True:
+			if player1.vy == 0:
+				lockout = False
 		if x == True:
 			if msgbox == True:
 				msgbox = False 

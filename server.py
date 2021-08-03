@@ -53,7 +53,7 @@ def sendPlayerLeave(player,addr,socket):
 	socket.sendto(data.encode('UTF-8'),addr)
 
 def sendPlayerPos(player,addr):
-	data = "pos;"+str(player.id)+";"+str(player.x)+";"+str(player.y)+"\n"
+	data = "pos;"+str(player.id)+";"+str(int(player.x))+";"+str(int(player.y))+";"+str(int(player.room))+"\n"
 	player.socket.sendto(data.encode('UTF-8'),addr)
 
 def sendPlayerMsg(socket,message,addr,name):
@@ -92,7 +92,7 @@ def timeout():
 
 
 thr = Thread(target = timeout,args =())
-thr.start()
+#thr.start()
 
 class PositionUpdate:
 	def __init__(self, pid, x: int, y: int):
@@ -122,6 +122,7 @@ class Player:
 		self.vx = 0
 		self.vy = 0
 		self.timeout = 0
+		self.room = 0
 	def setPosition(self, x, y):
 		self.x = x
 		self.y = y
@@ -145,7 +146,6 @@ class MyUDPHandler(socketserver.DatagramRequestHandler):
 		if split[0] == 'join':
 			allow = True
 			for x in players:
-				print(x.name)
 				if x.name == split[1]:
 					msg = "False"
 					msg = msg.encode()
@@ -173,6 +173,7 @@ class MyUDPHandler(socketserver.DatagramRequestHandler):
 				if str(players[i].id) == split[1]:
 					players[i].x = split[2]
 					players[i].y = split[3]
+					players[i].room = split[4]
 					for p in players:
 						if str(p.id) != str(players[i].id):
 							sendPlayerPos(players[i],p.addr)

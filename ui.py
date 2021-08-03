@@ -1,4 +1,6 @@
 import pygame
+#import Slider
+#from pygame_widgets import Button
 #used when rendering the complex buttons in menus
 class uistate:
 	def __init__(self):
@@ -222,6 +224,8 @@ class textbutton2():
 			for event in events:
 				if event.type == pygame.MOUSEBUTTONDOWN:
 					return self.text2 
+
+
 
 
 
