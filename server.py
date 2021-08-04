@@ -60,6 +60,10 @@ def sendPlayerMsg(socket,message,addr,name):
 	data = "msg;"+str(name)+";"+str(message)+"\n"
 	socket.sendto(data.encode('UTF-8'),addr)
 
+def sendPlayerDie(socket,addr,id):
+	data = "die;"+str(id)+"\n"
+	socket.sendto(data.encode('UTF-8'),addr)
+
 def sendPlayerTest(socket,addr):
 	data = "test;"+"\n"
 	socket.sendto(data.encode('UTF-8'),addr)
@@ -191,6 +195,10 @@ class MyUDPHandler(socketserver.DatagramRequestHandler):
 			for p in players:
 				p.timeout = 0
 				sendPlayerMsg(socket,split[1],p.addr,split[2])
+
+		elif split[0] == 'die':
+			for p in players:
+				sendPlayerDie(socket,p.addr,split[1])
 
 		
 

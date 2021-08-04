@@ -11,6 +11,7 @@ import socket
 import os
 import signal
 import sys
+import pygame.freetype
 
 HOST = None
 PORT = None
@@ -27,6 +28,7 @@ predict = False
 msgbox = False
 name = None
 msgtimeout = 0
+deathmsgtimeout = 0
 
 screen = pygame.display.set_mode((width, height),pygame.SCALED,vsync = 1 )
 #corner(x,y),(width,height)
@@ -39,12 +41,14 @@ coll1 = [(0,0),(0,640)],[(1024,0),(1024,640)],[(0,640),(1024,640)],[(0,0),(1024,
 hitbox = []#loads the hitboxes
 multiplays = []#stores the actor class
 messages = []
+deathmessages = []
 for x in coll:
 	hitbox.append(hitboxes.hitboxes(x[0][0],x[0][1],x[1][0],x[1][1]))
 
 state.state = "start"
 pygame.init()
 titlefont = pygame.font.Font(r'arial.ttf', 40)
+titlefont2 = pygame.font.Font(r'arial.ttf', 30)
 messagefont = pygame.font.Font(r'arial.ttf', 20)
 
 while True:
@@ -149,9 +153,11 @@ def networkthread(clientid):
 						multiplays.remove(x)
 
 			if split2[0] == "msg":
-
-
 				messages.append(split2[1]+": "+split2[2])
+				msgtimeout = 0
+
+			if split2[0] == "die":
+				messages.append(split2[1] +" has died")
 				msgtimeout = 0
 
 	os._exit(1)
@@ -167,6 +173,7 @@ def signal_handler(sig, frame):
 	os._exit(1)
 
 def roomcheck(player1):
+	print(player1.y)
 	global lockout
 	if player1.x > 997:
 		if player1.room < 1:
@@ -185,6 +192,18 @@ def roomcheck(player1):
 			lockout = True
 			print(lockout)
 			player1.vx = 0
+
+	if player1.y > 560:
+		player1.room = 0
+		player1.x = 4
+		player1.y = 0
+		lockout = True
+		print(lockout)
+		player1.vx = 0
+		data2 = "die;"+str(player1.name)+"\n"
+		data2 = data2.encode('UTF-8')
+		sock.sendto(data2,server_address)
+
 			
 			
 
@@ -200,6 +219,12 @@ while True:
 	roomcheck(player1)
 
 	screen.fill((128,128,128))
+	roomsg = "Room: "+str(player1.room +1)
+	lenofmsg = titlefont2.size(roomsg)
+	print(lenofmsg[0])
+
+	char1 = titlefont2.render("Room: "+str(player1.room +1), 1, (255,255,255))
+	screen.blit(char1, (1024-lenofmsg[0] , 10))
 
 	coll = eval("coll" + str(player1.room))
 	hitbox = []
@@ -236,6 +261,7 @@ while True:
 			msgtimeout = 0
 			messages.remove(messages[0])
 
+
 		
 
 
@@ -250,11 +276,30 @@ while True:
 
 		for i in range(len(messages)):
 			amount = messagefont.size(messages[i])
-			textSurf = messagefont.render(messages[i], 1, (255,255,255))
-			textRect = pygame.Rect(0+5,i*40, amount[0], amount[1])
-			#textRect.center = (((100/2)), (60+(60/2)+i*40))
-			#textRect.center = (0+amount[0],0+amount[1]+i*40)
-			screen.blit(textSurf, textRect)
+			lst = messages[i].split()
+			lst2 = list(lst[0])
+			print(lst2)
+			if ":" not in lst2:
+				message = lst[0]+" "+lst[1]+" "
+				message2 = lst[2]
+				font = pygame.freetype.Font(None, 50)
+				amount2 = messagefont.size(message)
+				
+				textSurf = messagefont.render(message, 1, (255,255,255))
+				textRect = pygame.Rect(0+5,i*40, amount[0], amount[1])
+				textSurf2 = messagefont.render(message2, 1, (255,0,0) )
+				textRect2 = pygame.Rect((0+5+amount2[0]),i*40, amount[0], amount[1])
+				screen.blit(textSurf, textRect)
+				screen.blit(textSurf2, textRect2)
+
+
+			else:
+				textSurf = messagefont.render(messages[i], 1, (255,255,255))
+				textRect = pygame.Rect(0+5,i*40, amount[0], amount[1])
+				#textRect.center = (((100/2)), (60+(60/2)+i*40))
+				#textRect.center = (0+amount[0],0+amount[1]+i*40)
+				screen.blit(textSurf, textRect)
+
 				
 
 
