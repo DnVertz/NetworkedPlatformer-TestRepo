@@ -15,6 +15,7 @@ s.close()
 PORT = 8008
 HOST = ''
 players = []
+bullets = []
 #players_lock = threading.Lock()
 s_print_lock = Lock()
 def s_print(*a, **b):
@@ -38,6 +39,12 @@ def removePlayer(playerID):
 def sendPlayerInit(player, addr,socket):
 	data = "init;"+str(player.id)+";"+str(player.x)+";"+str(player.y)+";"+str(player.name)+"\n"
 	socket.sendto(data.encode('UTF-8'),addr)
+
+
+def sendBulletSpawn(x,y,vx,vy,idd,addr,socket):
+	data = "bspawn;"+str(x)+";"+str(y)+";"+str(vx)+";"+str(vy)+";"+str(idd)+"\n"
+	socket.sendto(data.encode('UTF-8'),addr)
+
 
 
 def sendPlayerSpawn(player,addr):
@@ -133,6 +140,20 @@ class Player:
 	def getPosition(self):
 		return (self.x, self.y)
 
+class Bullet:
+	def __init__(self,x=0,y=0,vx=0,vy=0,idd= 0,addr = 0):
+		self.id = idd
+		self.x = 0
+		self.y = 0
+		self.vx = 0
+		self.vy = 0
+		self.addr = addr
+	def setPosition(self, x, y):
+		self.x = x
+		self.y = y
+	def getPosition(self):
+		return (self.x, self.y)
+
 
 
 class MyUDPHandler(socketserver.DatagramRequestHandler):
@@ -199,6 +220,18 @@ class MyUDPHandler(socketserver.DatagramRequestHandler):
 		elif split[0] == 'die':
 			for p in players:
 				sendPlayerDie(socket,p.addr,split[1])
+
+		elif split[0] == 'joinbullet':
+
+			print(split)
+			bullet = Bullet(split[1],split[2],split[3],split[4],split[5],self.client_address)
+			print(split)
+			bullets.append(bullet)
+			for p in players:
+				#if bullet.addr is not p.addr:
+				sendBulletSpawn(split[1],split[2],split[3],split[4],split[5],p.addr,socket)
+
+
 
 		
 

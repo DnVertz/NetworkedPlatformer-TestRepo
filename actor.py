@@ -1,6 +1,9 @@
 import pygame
 import numpy
 import random
+import bullet
+#import uuid
+import socket
 class actor:
 	def __init__(self, x=0, y=0, w=0, h=0, Θ=0,hitboxes=0,index= 0,name = None,predict = False,room=0):
 		self.hitboxes = hitboxes
@@ -17,6 +20,9 @@ class actor:
 		self.index = index 
 		self.id = 0
 		self.room = 0
+		self.ammo = 10
+		self.maxammo = 10
+		self.all_bullets = []
 		numbs = []
 		for word in self.index:
 			if word.isdigit():
@@ -41,8 +47,11 @@ class actor:
 		else:
 			self.vx = 0
 		#friction
-		if self.vx is not 0:
-			self.vx *= 0.90
+		if self.vx is not 0 and self.vy == 0:
+			self.vx *= 0.75
+		elif self.vy is not 0:
+			self.vx *= 0.95
+
 		#gravity/falling/floor collisons
 		if self.inBounds(self.x, self.y+g+self.vy) == False:
 			self.vy += g
@@ -110,13 +119,39 @@ class actor:
 
 	def moveLeft(self):
 		if self.inBounds(self.x , self.y) == False:
-			self.vx -= 0.92
+			if self.vy == 0:
+				self.vx -= 1.75
+			else:
+				self.vx -= 0.5
+
 
 
 	def moveRight(self):
 		if self.inBounds(self.x, self.y) == False:
-			self.vx += 0.92
+			if self.vy == 0:
+				self.vx += 1.75
+			else:
+				self.vx += 0.5
 
 
 	def setAngle(self, Θ=0):
 			self.Θ = Θ
+
+	def shoot(self,sock,server):
+		SPEED = 20
+		start = pygame.math.Vector2(self.x,self.y)
+		mouse = pygame.mouse.get_pos()
+		distance = mouse - start
+		positions = pygame.math.Vector2(start) 
+		speed = distance.normalize() * SPEED
+		newbullet = bullet.bullet(positions,speed,self.id)
+		#if self.ammo < maxammo:
+			#self.ammo -= 1
+		#self.all_bullets.append(newbullet)
+		data2 = "joinbullet;"+str(newbullet.position.x)+";"+str(newbullet.position.y)+";"+str(newbullet.speed.x)+";"+str(newbullet.speed.y)+";"+str(newbullet.idd)+"\n"
+		data2 = data2.encode('UTF-8')
+		sock.sendto(data2,server)
+		#return(all_bullets)
+
+	def remove(self,position,speed):
+		self.all_bullets.remove([position, speed])
