@@ -137,18 +137,20 @@ class actor:
 	def setAngle(self, Θ=0):
 			self.Θ = Θ
 
-	def shoot(self,sock,server):
-		SPEED = 20
+	def shoot(self,sock,server,clientid):
+		SPEED = 40
 		start = pygame.math.Vector2(self.x,self.y)
 		mouse = pygame.mouse.get_pos()
 		distance = mouse - start
 		positions = pygame.math.Vector2(start) 
 		speed = distance.normalize() * SPEED
-		newbullet = bullet.bullet(positions,speed,self.id)
+		newbullet = bullet.bullet(positions,speed)
+		newbullet.room = self.room
+		newbullet.idd = clientid
 		#if self.ammo < maxammo:
 			#self.ammo -= 1
 		#self.all_bullets.append(newbullet)
-		data2 = "joinbullet;"+str(newbullet.position.x)+";"+str(newbullet.position.y)+";"+str(newbullet.speed.x)+";"+str(newbullet.speed.y)+";"+str(newbullet.idd)+"\n"
+		data2 = "joinbullet;"+str(newbullet.position.x)+";"+str(newbullet.position.y)+";"+str(newbullet.speed.x)+";"+str(newbullet.speed.y)+";"+str(newbullet.idd)+";"+str(newbullet.room)+"\n"
 		data2 = data2.encode('UTF-8')
 		sock.sendto(data2,server)
 		#return(all_bullets)

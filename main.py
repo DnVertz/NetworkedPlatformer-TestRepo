@@ -24,6 +24,8 @@ width = 1024
 height = 640
 quitol = False
 clientid = 1
+deathtimeout = 0
+
 title = "Platformer"
 player1 = None
 predict = False
@@ -144,7 +146,7 @@ def networkthread(clientid):
 					for x in multiplays:
 						if x.index == split2[1]:
 							x.setPos(int(split2[2]),int(split2[3]))
-							print(split2[4])
+				
 							x.setRoom(split2[4])
 
 			if split2[0] == "leave":
@@ -161,8 +163,11 @@ def networkthread(clientid):
 
 			if split2[0] == "bspawn":
 				newbul = bullet.bullet(pygame.math.Vector2(int(float(split2[1])),int(float(split2[2]))),pygame.math.Vector2(int(float(split2[3])),int(float(split2[4]))))
-				print(split2[1])
-				newbul.idd = split2[3]
+	
+
+				newbul.idd = split2[5]
+
+				newbul.room = split2[6]
 				player1.all_bullets.append(newbul)
 
 
@@ -196,6 +201,7 @@ def roomcheck(player1):
 			lockout = True
 			print(lockout)
 			player1.vx = 0
+			deathtimeout = 0
 			
 	elif player1.x < 3:
 		if player1.room > 0:
@@ -205,6 +211,7 @@ def roomcheck(player1):
 			lockout = True
 			print(lockout)
 			player1.vx = 0
+			deathtimeout = 0
 
 	if player1.y > 560:
 		player1.room = 0
@@ -213,6 +220,7 @@ def roomcheck(player1):
 		lockout = True
 		print(lockout)
 		player1.vx = 0
+
 		data2 = "die;"+str(player1.name)+"\n"
 		data2 = data2.encode('UTF-8')
 		sock.sendto(data2,server_address)
@@ -227,6 +235,7 @@ def roomcheck(player1):
 
 
 while True:
+	deathtimeout += 1
 
 	signal.signal(signal.SIGINT, signal_handler)
 	roomcheck(player1)
@@ -243,10 +252,30 @@ while True:
 			pos_x = int(z.position.x)
 			pos_y = int(z.position.y)
 
+			if int(z.room) == player1.room:
+				pygame.draw.rect(screen, (255,255,255), (pos_x, pos_y,10,10))
 
-			pygame.draw.rect(screen, (255,255,255), (pos_x, pos_y,10,10))
+
+			if (player1.x) < (pos_x+20) and player1.x + player1.w > pos_x:
+				if player1.y + player1.h > pos_y and player1.y < (pos_y+20):
+					if str(z.idd) != str(clientid):
+						if int(z.room) == player1.room:
+							if deathtimeout > 100:
+								player1.room = 0
+								player1.x = 4
+								player1.y = 0
+								lockout = True
+								print(lockout)
+								player1.vx = 0
+								data2 = "die;"+str(player1.name)+"\n"
+								data2 = data2.encode('UTF-8')
+								sock.sendto(data2,server_address)
+								deathtimeout = 0
+			#print(z.idd)
+			#print(clientid)
 			if not 0<z.position.x < 1000:
 				if not 640 <z.position.y <0: 
+					print("removed")
 					player1.all_bullets.remove(z)
 
 	char1 = titlefont2.render("Room: "+str(player1.room +1), 1, (255,255,255))
@@ -339,7 +368,7 @@ while True:
 
 		#if kicked == True:
 		if lockout == False:
-			x = inputs.run(state,player1,events,msgbox,sock,server_address)
+			x = inputs.run(state,player1,events,msgbox,sock,server_address,clientid)
 
 		if lockout == True:
 			if player1.vy == 0:

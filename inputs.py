@@ -1,7 +1,7 @@
 import pygame 
 import ui 
 
-def run(state,player,events,msgbox,sock,server):
+def run(state,player,events,msgbox,sock,server,clientid):
 
 	for event in events:
 		if event.type == pygame.KEYDOWN:
@@ -22,7 +22,7 @@ def run(state,player,events,msgbox,sock,server):
 				player.moveUp()
 
 		if keys[pygame.K_e]:
-				player.shoot(sock,server)
+				player.shoot(sock,server,clientid)
 
 	
 

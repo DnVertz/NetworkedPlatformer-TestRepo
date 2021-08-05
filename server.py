@@ -41,8 +41,8 @@ def sendPlayerInit(player, addr,socket):
 	socket.sendto(data.encode('UTF-8'),addr)
 
 
-def sendBulletSpawn(x,y,vx,vy,idd,addr,socket):
-	data = "bspawn;"+str(x)+";"+str(y)+";"+str(vx)+";"+str(vy)+";"+str(idd)+"\n"
+def sendBulletSpawn(x,y,vx,vy,idd,addr,socket,room):
+	data = "bspawn;"+str(x)+";"+str(y)+";"+str(vx)+";"+str(vy)+";"+str(idd)+";"+str(room)+"\n"
 	socket.sendto(data.encode('UTF-8'),addr)
 
 
@@ -141,13 +141,14 @@ class Player:
 		return (self.x, self.y)
 
 class Bullet:
-	def __init__(self,x=0,y=0,vx=0,vy=0,idd= 0,addr = 0):
+	def __init__(self,x=0,y=0,vx=0,vy=0,idd= 0,room = 0,addr = 0):
 		self.id = idd
 		self.x = 0
 		self.y = 0
 		self.vx = 0
 		self.vy = 0
 		self.addr = addr
+		self.room = room
 	def setPosition(self, x, y):
 		self.x = x
 		self.y = y
@@ -224,12 +225,15 @@ class MyUDPHandler(socketserver.DatagramRequestHandler):
 		elif split[0] == 'joinbullet':
 
 			print(split)
-			bullet = Bullet(split[1],split[2],split[3],split[4],split[5],self.client_address)
+			bullet = Bullet(split[1],split[2],split[3],split[4],split[5],split[6],self.client_address)
 			print(split)
 			bullets.append(bullet)
 			for p in players:
 				#if bullet.addr is not p.addr:
-				sendBulletSpawn(split[1],split[2],split[3],split[4],split[5],p.addr,socket)
+				sendBulletSpawn(split[1],split[2],split[3],split[4],split[5],p.addr,socket,split[6])
+
+		if len(bullets) > 50:
+			bullets.remove(bullets[1])
 
 
 
