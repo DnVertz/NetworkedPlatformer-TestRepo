@@ -1,7 +1,8 @@
 import pygame 
 import ui 
 
-def run(state,player,events,msgbox,sock,server,clientid):
+def run(state,player,events,msgbox,sock,server,clientid,deathtimeout):
+	shooting = False
 
 	for event in events:
 		if event.type == pygame.KEYDOWN:
@@ -11,6 +12,7 @@ def run(state,player,events,msgbox,sock,server,clientid):
 
 	if msgbox == False:
 		keys = pygame.key.get_pressed()
+		mouse_buttons = pygame.mouse.get_pressed()
 		if keys[pygame.K_d]:
 			player.moveRight()
 					
@@ -21,8 +23,25 @@ def run(state,player,events,msgbox,sock,server,clientid):
 		if keys[pygame.K_SPACE]:
 				player.moveUp()
 
-		if keys[pygame.K_e]:
-				player.shoot(sock,server,clientid)
+		if keys[pygame.K_1]:
+				player.weapon_one()
+
+		if keys[pygame.K_2]:
+				player.weapon_two()
+
+		if keys[pygame.K_3]:
+				player.weapon_three()
+
+		if mouse_buttons[0]:
+			shooting = True
+			player.shoot(sock,server,clientid,deathtimeout)
+
+
+		if keys[pygame.K_r]:
+			if shooting == False:
+				player.reload()
+
+		
 
 	
 

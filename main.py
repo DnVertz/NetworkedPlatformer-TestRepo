@@ -168,6 +168,7 @@ def networkthread(clientid):
 				newbul.idd = split2[5]
 
 				newbul.room = split2[6]
+				newbul.size = split2[7]
 				player1.all_bullets.append(newbul)
 
 
@@ -176,6 +177,18 @@ def networkthread(clientid):
 
 			if split2[0] == "die":
 				messages.append(split2[1] +" has died")
+				msgtimeout = 0
+
+			if split2[0] == "killed":
+				names = None
+				print(split2)
+				for p in multiplays:
+					print(p.index)
+					if str(p.index) == str(split2[2]):
+						names = p.name
+
+
+				messages.append(names +" has killed "+split2[1])
 				msgtimeout = 0
 
 	os._exit(1)
@@ -243,6 +256,8 @@ while True:
 	screen.fill((128,128,128))
 	roomsg = "Room: "+str(player1.room +1)
 	lenofmsg = titlefont2.size(roomsg)
+	roomsg2 = "Room: "+str(int(10-player1.ammo))
+	lenofmsg3 = titlefont2.size(roomsg2)
 
 
 	if player1.all_bullets is not None:
@@ -253,33 +268,51 @@ while True:
 			pos_y = int(z.position.y)
 
 			if int(z.room) == player1.room:
-				pygame.draw.rect(screen, (255,255,255), (pos_x, pos_y,10,10))
+				#pygame.draw.rect(screen, (255,255,255), (pos_x, pos_y,10,10))
+				#print(z.size)
+				pygame.draw.circle(screen, (255,255,255), (pos_x, pos_y),int(z.size))
 
 
-			if (player1.x) < (pos_x+20) and player1.x + player1.w > pos_x:
-				if player1.y + player1.h > pos_y and player1.y < (pos_y+20):
+			if (player1.x) < (pos_x+10) and player1.x + player1.w > pos_x:
+				if player1.y + player1.h > pos_y and player1.y < (pos_y+10):
 					if str(z.idd) != str(clientid):
 						if int(z.room) == player1.room:
 							if deathtimeout > 100:
+								#send bullet id to server 
 								player1.room = 0
 								player1.x = 4
 								player1.y = 0
 								lockout = True
 								print(lockout)
 								player1.vx = 0
-								data2 = "die;"+str(player1.name)+"\n"
+								data2 = "killed;"+str(player1.name)+";"+str(z.idd)+"\n"
 								data2 = data2.encode('UTF-8')
 								sock.sendto(data2,server_address)
 								deathtimeout = 0
 			#print(z.idd)
 			#print(clientid)
-			if not 0<z.position.x < 1000:
+			"""if not 0<z.position.x < 1000:
 				if not 640 <z.position.y <0: 
-					print("removed")
-					player1.all_bullets.remove(z)
+					player1.all_bullets.remove(z)"""
+			
+			for hitboxs in hitbox:
+				if (hitboxs.x) < (int(float(z.position.x))) and hitboxs.x + hitboxs.w +10 > int(float(z.position.x)):
+					if hitboxs.y + hitboxs.h+10> int(float(z.position.y)) and hitboxs.y< (int(float(z.position.y))) :
+						if z in player1.all_bullets:
+							player1.all_bullets.remove(z)
+						
 
 	char1 = titlefont2.render("Room: "+str(player1.room +1), 1, (255,255,255))
 	screen.blit(char1, (1024-lenofmsg[0] , 10))
+	char3 = titlefont2.render("Ammo: "+str(int(player1.maxammo-player1.ammo)), 1, (255,255,255))
+	screen.blit(char3, (1020-lenofmsg3[0] , 50))
+
+
+
+	if player1.reloading == True:
+		lenofmsg2 = titlefont2.size("Reloading")
+		char2 = titlefont2.render("Reloading", 1, (255,255,255))
+		screen.blit(char2, (512+lenofmsg2[0], 320))
 
 	coll = eval("coll" + str(player1.room))
 	hitbox = []
@@ -333,10 +366,17 @@ while True:
 			amount = messagefont.size(messages[i])
 			lst = messages[i].split()
 			lst2 = list(lst[0])
-			print(lst2)
+
 			if ":" not in lst2:
-				message = lst[0]+" "+lst[1]+" "
-				message2 = lst[2]
+				if len(lst) <= 3:
+					print(lst)
+					message = lst[0]+" "+lst[1]+" "
+					message2 = lst[2]
+				else:
+					message = lst[0]+" "+lst[1]+" "+lst[2]
+					message2 = " "+lst[3]
+
+				
 				font = pygame.freetype.Font(None, 50)
 				amount2 = messagefont.size(message)
 				
@@ -368,7 +408,7 @@ while True:
 
 		#if kicked == True:
 		if lockout == False:
-			x = inputs.run(state,player1,events,msgbox,sock,server_address,clientid)
+			x = inputs.run(state,player1,events,msgbox,sock,server_address,clientid,deathtimeout)
 
 		if lockout == True:
 			if player1.vy == 0:

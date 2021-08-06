@@ -41,8 +41,8 @@ def sendPlayerInit(player, addr,socket):
 	socket.sendto(data.encode('UTF-8'),addr)
 
 
-def sendBulletSpawn(x,y,vx,vy,idd,addr,socket,room):
-	data = "bspawn;"+str(x)+";"+str(y)+";"+str(vx)+";"+str(vy)+";"+str(idd)+";"+str(room)+"\n"
+def sendBulletSpawn(x,y,vx,vy,idd,addr,socket,room,size):
+	data = "bspawn;"+str(x)+";"+str(y)+";"+str(vx)+";"+str(vy)+";"+str(idd)+";"+str(room)+";"+str(size)+"\n"
 	socket.sendto(data.encode('UTF-8'),addr)
 
 
@@ -71,6 +71,10 @@ def sendPlayerDie(socket,addr,id):
 	data = "die;"+str(id)+"\n"
 	socket.sendto(data.encode('UTF-8'),addr)
 
+def sendPlayerKilled(socket,addr,id,id2):
+	data = "killed;"+str(id)+";"+str(id2)+"\n"
+	socket.sendto(data.encode('UTF-8'),addr)
+
 def sendPlayerTest(socket,addr):
 	data = "test;"+"\n"
 	socket.sendto(data.encode('UTF-8'),addr)
@@ -80,7 +84,7 @@ def timeout():
 		global players
 		try:
 			for i in range(len(players)):
-				print(players[i].timeout)
+
 				if players[i].timeout == 60: 
 					for p in players:
 						sendPlayerLeave(players[i],p.addr,p.socket)
@@ -222,15 +226,19 @@ class MyUDPHandler(socketserver.DatagramRequestHandler):
 			for p in players:
 				sendPlayerDie(socket,p.addr,split[1])
 
+		elif split[0] == 'killed':
+			for p in players:
+				sendPlayerKilled(socket,p.addr,split[1],split[2])
+
 		elif split[0] == 'joinbullet':
 
-			print(split)
+
 			bullet = Bullet(split[1],split[2],split[3],split[4],split[5],split[6],self.client_address)
-			print(split)
+
 			bullets.append(bullet)
 			for p in players:
 				#if bullet.addr is not p.addr:
-				sendBulletSpawn(split[1],split[2],split[3],split[4],split[5],p.addr,socket,split[6])
+				sendBulletSpawn(split[1],split[2],split[3],split[4],split[5],p.addr,socket,split[6],split[7])
 
 		if len(bullets) > 50:
 			bullets.remove(bullets[1])
